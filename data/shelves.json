@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "01KQCS51SZPVR1MRJJ8SP85BMT",
+    "userId": "demo-user",
+    "name": "My Shelf",
+    "bookIds": [
+      "bk_044",
+      "bk_037",
+      "bk_036"
+    ],
+    "createdAt": "2026-04-29T14:09:12.001Z"
+  }
+]
