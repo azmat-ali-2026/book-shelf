@@ -31,13 +31,13 @@ The API imports `@bookshelf/shared` via a TypeScript path alias (`../../packages
 
 ### Data Layer (`apps/api/src/data/`)
 
-- **FileStore\<T\>** — Generic JSON-file-backed store. Loads into `Map<string, T>` on construction; all reads hit memory; writes flush synchronously via `fs.writeFileSync`. `DATA_DIR` env var controls the directory (default: `<project>/data`).
-- **GenreIndex** — Inverted Map index for O(g) genre queries instead of O(n). Supports exact, prefix, and partial case-insensitive matches. Marks itself stale after writes and rebuilds lazily.
+- **FileStore\<T\>** — Generic JSON-file-backed store. Loads into `Map<string, T>` on construction; all reads hit memory; writes flush synchronously via `fs.writeFileSync`. `DATA_DIR` env var controls the directory (default: resolved relative to `__dirname` up to `<project>/data`).
+- **GenreIndex** — Inverted Map index for O(g) genre queries instead of O(n). Supports exact, prefix, and partial case-insensitive matches via `genre.includes(term)`. Marks itself stale after writes and rebuilds lazily.
 - **data/index.ts** — Lazy singletons for `bookStore`, `shelfStore`, `reviewStore`, and `genreIndex`. `resetStores()` recreates all singletons — called by tests before each suite for isolation.
 
 ### Service Layer (`apps/api/src/services/`)
 
-- **bookService**: `deleteBook` cascades — removes the book from all shelves and deletes all its reviews.
+- **bookService**: `deleteBook` cascades — removes the book from all shelves and deletes all its reviews. `listBooks` uses `GenreIndex` for genre filtering; all genre mutations call `genreIndex.invalidate()`.
 - **shelfService**: `addBookToShelf` throws `ConflictError` (409) for duplicate adds.
 - **reviewService**: Validates the book exists before creating a review.
 
@@ -52,7 +52,7 @@ POST /api/books/:id/reviews
 GET  /api/books/:id           — returns book + reviews
 PUT  /api/books/:id
 DELETE /api/books/:id         — cascades to shelves and reviews
-GET  /api/books               — filter by genre, year
+GET  /api/books               — filter by genre (partial/prefix/case-insensitive via GenreIndex), year
 POST /api/books
 
 GET  /api/shelves             — optional ?userId filter
@@ -67,7 +67,7 @@ DELETE /api/shelves/:id/books/:bookId
 - Error hierarchy: `AppError` (base) → `NotFoundError` (404), `ValidationError` (400, includes flattened Zod details), `ConflictError` (409).
 - `errorHandler.ts` is a four-parameter Express middleware — it must remain last in `app.ts`.
 
-### Test Isolation (`apps/api/tests/testDataDir.ts`)
+### Test Isolation (`apps/api/tests/helpers/testDataDir.ts`)
 
 Each test suite's `beforeAll` creates a temp directory, copies the seed JSON files there, sets `DATA_DIR`, and calls `resetStores()`. `afterAll` deletes the temp dir and resets again. This pattern must be used in any new test file.
 
@@ -76,3 +76,4 @@ Each test suite's `beforeAll` creates a temp directory, copies the seed JSON fil
 - IDs are generated with `ulid()` (not `nanoid` — v5+ is ESM-only and incompatible with CommonJS).
 - `noUncheckedIndexedAccess: true` is enabled — array/map accesses return `T | undefined` and must be guarded.
 - All modules are CommonJS (`"module": "CommonJS"` in tsconfig).
+- `apps/api/tsconfig.json` only covers `src/`. Test files are covered by `tsconfig.test.json`, which ts-jest is configured to use via `jest.config.js` and which the IDE uses for type checking inside `tests/`.

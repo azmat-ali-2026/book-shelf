@@ -6,5 +6,10 @@ module.exports = {
   moduleNameMapper: {
     '^@bookshelf/shared$': '<rootDir>/../../packages/shared/src/index.ts',
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.test.json',
+    },
+  },
   testTimeout: 10000,
 };
