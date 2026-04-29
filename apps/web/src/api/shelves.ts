@@ -1,18 +1,27 @@
-import { api } from './client';
-import type { Shelf } from '../types';
+import { apiClient } from './client';
+import type { Shelf, ApiResponse } from '../types';
 
 export const shelvesApi = {
-  list: (userId?: string) => {
+  list: async (userId?: string): Promise<Shelf[]> => {
     const qs = userId ? `?userId=${encodeURIComponent(userId)}` : '';
-    return api.get<Shelf[]>(`/api/shelves${qs}`);
+    const { data } = await apiClient.get<ApiResponse<Shelf[]>>(`/api/shelves${qs}`);
+    return data.data;
   },
 
-  create: (data: { userId: string; name: string }) =>
-    api.post<Shelf>('/api/shelves', data),
+  create: async (payload: { userId: string; name: string }): Promise<Shelf> => {
+    const { data } = await apiClient.post<ApiResponse<Shelf>>('/api/shelves', payload);
+    return data.data;
+  },
 
-  addBook: (shelfId: string, bookId: string) =>
-    api.post<Shelf>(`/api/shelves/${shelfId}/books`, { bookId }),
+  addBook: async (shelfId: string, bookId: string): Promise<Shelf> => {
+    const { data } = await apiClient.post<ApiResponse<Shelf>>(
+      `/api/shelves/${shelfId}/books`,
+      { bookId },
+    );
+    return data.data;
+  },
 
-  removeBook: (shelfId: string, bookId: string) =>
-    api.delete(`/api/shelves/${shelfId}/books/${bookId}`),
+  removeBook: async (shelfId: string, bookId: string): Promise<void> => {
+    await apiClient.delete(`/api/shelves/${shelfId}/books/${bookId}`);
+  },
 };

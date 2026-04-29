@@ -1,16 +1,8 @@
-import { useState } from 'react';
+import { useFormik } from 'formik';
 import type { Book } from '../types';
 import { GENRES } from '../constants';
-
-type BookFormData = {
-  title: string;
-  author: string;
-  genre: string;
-  year: string;
-  isbn: string;
-  description: string;
-  coverUrl: string;
-};
+import { bookFormSchema, type BookFormValues } from '../schemas/bookSchema';
+import { toFormikValidate } from '../lib/zodFormik';
 
 interface BookFormProps {
   initial?: Partial<Book>;
@@ -19,191 +11,182 @@ interface BookFormProps {
   submitLabel?: string;
 }
 
-function fieldClass(error?: boolean) {
-  return `w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
-    error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300'
+const fieldClass = (hasError: boolean) =>
+  `w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+    hasError
+      ? 'border-red-400 bg-red-50'
+      : 'border-gray-200 bg-white hover:border-gray-300'
   }`;
-}
 
-function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
-  return (
-    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-      {children}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
-    </label>
-  );
-}
+const FieldLabel = ({
+  children,
+  required,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+}) => (
+  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+    {children}
+    {required && <span className="ml-0.5 text-red-500">*</span>}
+  </label>
+);
 
-export function BookForm({ initial, onSubmit, onCancel, submitLabel = 'Save' }: BookFormProps) {
-  const [form, setForm] = useState<BookFormData>({
-    title: initial?.title ?? '',
-    author: initial?.author ?? '',
-    genre: initial?.genre ?? '',
-    year: initial?.year ? String(initial.year) : '',
-    isbn: initial?.isbn ?? '',
-    description: initial?.description ?? '',
-    coverUrl: initial?.coverUrl ?? '',
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="mt-1 text-xs text-red-500">{message}</p> : null;
+
+export const BookForm = ({
+  initial,
+  onSubmit,
+  onCancel,
+  submitLabel = 'Save',
+}: BookFormProps) => {
+  const formik = useFormik<BookFormValues>({
+    initialValues: {
+      title: initial?.title ?? '',
+      author: initial?.author ?? '',
+      genre: initial?.genre ?? '',
+      year: initial?.year ? String(initial.year) : '',
+      isbn: initial?.isbn ?? '',
+      description: initial?.description ?? '',
+      coverUrl: initial?.coverUrl ?? '',
+    },
+    validate: toFormikValidate(bookFormSchema),
+    onSubmit: async (values, { setStatus, setSubmitting }) => {
+      try {
+        await onSubmit({
+          title: values.title.trim(),
+          author: values.author.trim(),
+          genre: values.genre,
+          year: Number(values.year),
+          isbn: values.isbn.trim() || undefined,
+          description: values.description.trim() || undefined,
+          coverUrl: values.coverUrl.trim() || null,
+        });
+      } catch (err) {
+        setStatus(err instanceof Error ? err.message : 'Something went wrong');
+        setSubmitting(false);
+      }
+    },
   });
-  const [errors, setErrors] = useState<Partial<BookFormData>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [serverError, setServerError] = useState('');
 
-  function validate(): boolean {
-    const errs: Partial<BookFormData> = {};
-    if (!form.title.trim()) errs.title = 'Title is required';
-    if (!form.author.trim()) errs.author = 'Author is required';
-    if (!form.genre) errs.genre = 'Genre is required';
-    const y = Number(form.year);
-    if (!form.year || isNaN(y) || y < 1000 || y > new Date().getFullYear()) {
-      errs.year = `Year must be between 1000 and ${new Date().getFullYear()}`;
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validate()) return;
-    setSubmitting(true);
-    setServerError('');
-    try {
-      await onSubmit({
-        title: form.title.trim(),
-        author: form.author.trim(),
-        genre: form.genre,
-        year: Number(form.year),
-        isbn: form.isbn.trim() || undefined,
-        description: form.description.trim() || undefined,
-        coverUrl: form.coverUrl.trim() || null,
-      });
-    } catch (err) {
-      setServerError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  function set(field: keyof BookFormData, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-    if (errors[field]) setErrors((e) => ({ ...e, [field]: undefined }));
-  }
+  const err = (field: keyof BookFormValues) =>
+    formik.touched[field] ? formik.errors[field] : undefined;
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <form onSubmit={formik.handleSubmit} noValidate>
       <div className="space-y-4">
         <div>
-          <Label required>Title</Label>
+          <FieldLabel required>Title</FieldLabel>
           <input
             type="text"
-            value={form.title}
-            onChange={(e) => set('title', e.target.value)}
-            className={fieldClass(!!errors.title)}
+            {...formik.getFieldProps('title')}
+            className={fieldClass(!!err('title'))}
             placeholder="e.g. The Great Gatsby"
             maxLength={200}
           />
-          {errors.title && <p className="mt-1 text-xs text-red-500">{errors.title}</p>}
+          <FieldError message={err('title')} />
         </div>
 
         <div>
-          <Label required>Author</Label>
+          <FieldLabel required>Author</FieldLabel>
           <input
             type="text"
-            value={form.author}
-            onChange={(e) => set('author', e.target.value)}
-            className={fieldClass(!!errors.author)}
+            {...formik.getFieldProps('author')}
+            className={fieldClass(!!err('author'))}
             placeholder="e.g. F. Scott Fitzgerald"
             maxLength={100}
           />
-          {errors.author && <p className="mt-1 text-xs text-red-500">{errors.author}</p>}
+          <FieldError message={err('author')} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label required>Genre</Label>
+            <FieldLabel required>Genre</FieldLabel>
             <select
-              value={form.genre}
-              onChange={(e) => set('genre', e.target.value)}
-              className={fieldClass(!!errors.genre)}
+              {...formik.getFieldProps('genre')}
+              className={fieldClass(!!err('genre'))}
             >
               <option value="">Select genre…</option>
               {GENRES.map((g) => (
-                <option key={g} value={g}>{g}</option>
+                <option key={g} value={g}>
+                  {g}
+                </option>
               ))}
             </select>
-            {errors.genre && <p className="mt-1 text-xs text-red-500">{errors.genre}</p>}
+            <FieldError message={err('genre')} />
           </div>
 
           <div>
-            <Label required>Year</Label>
+            <FieldLabel required>Year</FieldLabel>
             <input
               type="number"
-              value={form.year}
-              onChange={(e) => set('year', e.target.value)}
-              className={fieldClass(!!errors.year)}
+              {...formik.getFieldProps('year')}
+              className={fieldClass(!!err('year'))}
               placeholder={String(new Date().getFullYear())}
               min={1000}
               max={new Date().getFullYear()}
             />
-            {errors.year && <p className="mt-1 text-xs text-red-500">{errors.year}</p>}
+            <FieldError message={err('year')} />
           </div>
         </div>
 
         <div>
-          <Label>ISBN</Label>
+          <FieldLabel>ISBN</FieldLabel>
           <input
             type="text"
-            value={form.isbn}
-            onChange={(e) => set('isbn', e.target.value)}
-            className={fieldClass()}
+            {...formik.getFieldProps('isbn')}
+            className={fieldClass(false)}
             placeholder="e.g. 9780743273565"
           />
         </div>
 
         <div>
-          <Label>Cover URL</Label>
+          <FieldLabel>Cover URL</FieldLabel>
           <input
             type="url"
-            value={form.coverUrl}
-            onChange={(e) => set('coverUrl', e.target.value)}
-            className={fieldClass()}
+            {...formik.getFieldProps('coverUrl')}
+            className={fieldClass(!!err('coverUrl'))}
             placeholder="https://…"
           />
+          <FieldError message={err('coverUrl')} />
         </div>
 
         <div>
-          <Label>Description</Label>
+          <FieldLabel>Description</FieldLabel>
           <textarea
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
-            className={`${fieldClass()} resize-none`}
+            {...formik.getFieldProps('description')}
+            className={`${fieldClass(!!err('description'))} resize-none`}
             rows={3}
             placeholder="A brief description…"
             maxLength={2000}
           />
+          <FieldError message={err('description')} />
         </div>
       </div>
 
-      {serverError && (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{serverError}</p>
+      {formik.status && (
+        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          {formik.status as string}
+        </p>
       )}
 
       <div className="mt-6 flex justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}
-          disabled={submitting}
+          disabled={formik.isSubmitting}
           className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={submitting}
+          disabled={formik.isSubmitting}
           className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-60"
         >
-          {submitting ? 'Saving…' : submitLabel}
+          {formik.isSubmitting ? 'Saving…' : submitLabel}
         </button>
       </div>
     </form>
   );
-}
+};

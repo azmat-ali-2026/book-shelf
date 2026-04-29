@@ -1,3 +1,4 @@
+import axios from 'axios';
 import type { ApiError } from '../types';
 
 export class ApiRequestError extends Error {
@@ -12,34 +13,23 @@ export class ApiRequestError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
-  });
+export const apiClient = axios.create({
+  headers: { 'Content-Type': 'application/json' },
+});
 
-  if (res.status === 204) return undefined as T;
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    const err = json as ApiError;
-    throw new ApiRequestError(
-      res.status,
-      err.error.code,
-      err.error.message,
-      err.error.details,
-    );
-  }
-
-  return (json as { data: T }).data;
-}
-
-export const api = {
-  get: <T>(path: string) => request<T>(path),
-  post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: (path: string) => request<void>(path, { method: 'DELETE' }),
-};
+// Pass-through for successful responses; transform errors into typed ApiRequestError.
+apiClient.interceptors.response.use(
+  undefined,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response !== undefined) {
+      const apiError = error.response.data as ApiError;
+      throw new ApiRequestError(
+        error.response.status,
+        apiError.error.code,
+        apiError.error.message,
+        apiError.error.details,
+      );
+    }
+    throw error;
+  },
+);

@@ -14,19 +14,21 @@ const shelfGradients = [
   'from-violet-500 to-purple-600',
 ];
 
-function shelfGradient(id: string): string {
+const shelfGradient = (id: string): string => {
   const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return shelfGradients[hash % shelfGradients.length] ?? shelfGradients[0];
-}
+  return shelfGradients[hash % shelfGradients.length] ?? shelfGradients[0]!;
+};
 
-export function ShelfCard({ shelf }: ShelfCardProps) {
+export const ShelfCard = ({ shelf }: ShelfCardProps) => {
   const gradient = shelfGradient(shelf.id);
   const count = shelf.bookIds.length;
 
   return (
     <Link to={`/shelves/${shelf.id}`}>
       <div className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition-all duration-200 hover:-translate-y-1 hover:shadow-md hover:ring-primary-100">
-        <div className={`flex h-28 items-center justify-center bg-gradient-to-br ${gradient} p-4`}>
+        <div
+          className={`flex h-28 items-center justify-center bg-gradient-to-br ${gradient} p-4`}
+        >
           <span className="text-5xl transition-transform duration-200 group-hover:scale-110">
             🗂️
           </span>
@@ -42,4 +44,4 @@ export function ShelfCard({ shelf }: ShelfCardProps) {
       </div>
     </Link>
   );
-}
+};
