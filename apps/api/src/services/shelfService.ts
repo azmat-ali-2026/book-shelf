@@ -17,6 +17,12 @@ export const shelfService = {
     return shelves;
   },
 
+  getShelfById(id: string): Shelf {
+    const shelf = getShelfStore().getById(id);
+    if (!shelf) throw new NotFoundError(`Shelf '${id}' not found`);
+    return shelf;
+  },
+
   createShelf(dto: CreateShelfDto): Shelf {
     const shelf: Shelf = {
       id: ulid(),
@@ -54,5 +60,11 @@ export const shelfService = {
       ...shelf,
       bookIds: shelf.bookIds.filter((id) => id !== bookId),
     });
+  },
+
+  deleteShelf(id: string): void {
+    const exists = getShelfStore().getById(id);
+    if (!exists) throw new NotFoundError(`Shelf '${id}' not found`);
+    getShelfStore().delete(id);
   },
 };

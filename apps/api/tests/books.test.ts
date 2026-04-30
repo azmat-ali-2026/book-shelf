@@ -99,6 +99,26 @@ describe('GET /api/books/:id', () => {
   });
 });
 
+describe('GET /api/books/:id/shelves', () => {
+  it('returns shelves that contain the book', async () => {
+    const createShelfRes = await request(app)
+      .post('/api/shelves')
+      .send({ userId: 'book-shelves-user', name: 'Book Shelves Test' })
+      .expect(201);
+    const shelfId = createShelfRes.body.data.id as string;
+
+    await request(app).post(`/api/shelves/${shelfId}/books`).send({ bookId: 'bk_001' }).expect(200);
+
+    const res = await request(app).get('/api/books/bk_001/shelves').expect(200);
+    expect(res.body.data).toBeInstanceOf(Array);
+    expect(res.body.data.some((s: { id: string }) => s.id === shelfId)).toBe(true);
+  });
+
+  it('returns 404 for unknown book id', async () => {
+    await request(app).get('/api/books/bk_9999/shelves').expect(404);
+  });
+});
+
 describe('POST /api/books', () => {
   it('creates a book and returns 201', async () => {
     const payload = {
@@ -144,6 +164,28 @@ describe('PUT /api/books/:id', () => {
 describe('DELETE /api/books/:id', () => {
   it('deletes a book and returns 204', async () => {
     await request(app).delete('/api/books/bk_050').expect(204);
+  });
+
+  it('removes the deleted book from shelves', async () => {
+    const bookRes = await request(app)
+      .post('/api/books')
+      .send({ title: 'Cascade Delete Book', author: 'Test Author', genre: 'Fiction', year: 2020 })
+      .expect(201);
+    const bookId = bookRes.body.data.id as string;
+
+    const shelfRes = await request(app)
+      .post('/api/shelves')
+      .send({ userId: 'delete-test-user', name: 'Delete Cascade Shelf' })
+      .expect(201);
+
+    const shelfId = shelfRes.body.data.id as string;
+
+    await request(app).post(`/api/shelves/${shelfId}/books`).send({ bookId }).expect(200);
+    await request(app).delete(`/api/books/${bookId}`).expect(204);
+
+    const shelvesRes = await request(app).get('/api/shelves?userId=delete-test-user').expect(200);
+    expect(shelvesRes.body.data).toHaveLength(1);
+    expect(shelvesRes.body.data[0].bookIds).not.toContain(bookId);
   });
 
   it('returns 404 when deleting a non-existent book', async () => {

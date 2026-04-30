@@ -1,0 +1,29 @@
+---
+description: Lightweight React and TanStack Query conventions for frontend code
+globs: apps/web/**/*.tsx
+alwaysApply: false
+---
+
+# Component Structure
+
+- Each component should have one primary UI responsibility.
+- Extract repeated JSX or behavior into reusable components/hooks after the second repetition.
+- Keep props typed and explicit; avoid `any` and untyped prop bags.
+
+# Data Fetching
+
+- Use TanStack Query for all server state (queries and mutations).
+- Keep query keys stable and sourced from shared key helpers when available.
+- Invalidate or update affected queries in mutation success handlers.
+
+# UI And Logic Separation
+
+- Keep API calls in API modules or custom hooks, not directly in component render paths.
+- Move non-trivial state transitions and derived logic into hooks or utilities.
+- Keep JSX focused on rendering; avoid embedding multi-step data transformation in markup.
+
+# Render Performance
+
+- Avoid unnecessary re-renders from unstable props in lists or frequently updated views.
+- Use `useMemo` for expensive derived values and `useCallback` for callbacks passed to memoized children.
+- Keep state at the lowest practical component level; do not lift state without a clear need.

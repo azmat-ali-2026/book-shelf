@@ -23,6 +23,14 @@ const create: RequestHandler = (req, res, next) => {
   }
 };
 
+const getById: RequestHandler = (req, res, next) => {
+  try {
+    res.json({ data: shelfService.getShelfById(req.params['id'] ?? '') });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const addBook: RequestHandler = (req, res, next) => {
   try {
     const shelf = shelfService.addBookToShelf(
@@ -47,9 +55,20 @@ const removeBook: RequestHandler = (req, res, next) => {
   }
 };
 
+const remove: RequestHandler = (req, res, next) => {
+  try {
+    shelfService.deleteShelf(req.params['id'] ?? '');
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
+
 router.get('/', list);
 router.post('/', validate(createShelfSchema), create);
 router.post('/:id/books', validate(addBookToShelfSchema), addBook);
 router.delete('/:id/books/:bookId', removeBook);
+router.get('/:id', getById);
+router.delete('/:id', remove);
 
 export { router as shelvesRouter };

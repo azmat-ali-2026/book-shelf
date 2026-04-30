@@ -35,6 +35,17 @@ describe('GET /api/shelves', () => {
   });
 });
 
+describe('GET /api/shelves/:id', () => {
+  it('returns a shelf by id', async () => {
+    const res = await request(app).get(`/api/shelves/${createdShelfId}`).expect(200);
+    expect(res.body.data.id).toBe(createdShelfId);
+  });
+
+  it('returns 404 for unknown shelf id', async () => {
+    await request(app).get('/api/shelves/unknown-shelf').expect(404);
+  });
+});
+
 describe('POST /api/shelves/:id/books', () => {
   it('adds a book to a shelf', async () => {
     const res = await request(app)
@@ -79,5 +90,22 @@ describe('DELETE /api/shelves/:id/books/:bookId', () => {
     await request(app)
       .delete(`/api/shelves/${createdShelfId}/books/bk_999`)
       .expect(404);
+  });
+});
+
+describe('DELETE /api/shelves/:id', () => {
+  it('deletes a shelf and returns 204', async () => {
+    const createRes = await request(app)
+      .post('/api/shelves')
+      .send({ userId: 'user_delete', name: 'To Delete' })
+      .expect(201);
+    const shelfId = createRes.body.data.id as string;
+
+    await request(app).delete(`/api/shelves/${shelfId}`).expect(204);
+    await request(app).get(`/api/shelves/${shelfId}`).expect(404);
+  });
+
+  it('returns 404 for unknown shelf id', async () => {
+    await request(app).delete('/api/shelves/unknown-shelf').expect(404);
   });
 });

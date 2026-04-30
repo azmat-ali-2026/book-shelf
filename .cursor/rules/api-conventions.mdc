@@ -1,0 +1,31 @@
+---
+description: API conventions for Node.js and TypeScript backend code
+globs: apps/api/**/*.ts
+alwaysApply: false
+---
+
+# API Conventions
+
+- Every route handler must return the standard envelope:
+  - Success: `{ data: ... }`
+  - Error: `{ error: { code, message, details? } }`
+- Route handlers must set an explicit status code before responding.
+- Use 201 for successful create operations; use 200 for successful reads/updates/deletes.
+
+# Validation
+
+- Validate `req.params`, `req.query`, and `req.body` at the route boundary with schemas.
+- On schema failure, return or throw a validation error mapped to HTTP 400.
+- Do not parse or coerce unvalidated input inside service calls.
+
+# Error Handling
+
+- Route handlers must delegate thrown errors to centralized error middleware.
+- Do not send ad-hoc error payloads directly from route handlers.
+- Route handlers must not expose stack traces, raw exceptions, or storage internals in responses.
+
+# Separation Of Concerns
+
+- Route handlers own HTTP concerns only: request parsing, validation, service invocation, and response mapping.
+- Keep route handlers thin; move business decisions to services.
+- Route files must not import Node `fs` or storage implementation details.

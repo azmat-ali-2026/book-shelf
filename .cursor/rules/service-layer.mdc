@@ -1,0 +1,24 @@
+---
+description: Service-layer rules for business logic in API services
+globs: apps/api/services/**/*.ts
+alwaysApply: false
+---
+
+# Service Layer
+
+- Services must contain business rules, invariants, and cross-entity orchestration.
+- Export service functions with explicit TypeScript input and return types.
+- Service functions should return domain results or throw typed domain/app errors.
+
+# Boundaries
+
+- Services must not depend on HTTP primitives (`Request`, `Response`, headers, status codes).
+- Services must not construct API response envelopes (`{ data }` / `{ error }`).
+- Services must not import Node `fs`, database clients, or raw storage drivers directly.
+- All persistence reads/writes must go through data/repository abstractions.
+
+# Error And Validation Expectations
+
+- Validate business constraints in services (uniqueness, ownership, state transitions).
+- Treat route-level schema validation as precondition; re-check only business-critical assumptions.
+- Do not swallow failures or return partial-success states without an explicit contract.

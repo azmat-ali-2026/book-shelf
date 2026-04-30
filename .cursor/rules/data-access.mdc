@@ -1,0 +1,29 @@
+---
+description: Data-access conventions for repositories and data modules
+globs: apps/api/{data,repositories}/**/*.ts
+alwaysApply: false
+---
+
+# Data Access Layer
+
+- Centralize all persistence reads/writes in data or repository modules.
+- Expose storage through typed repository/store APIs instead of leaking storage internals.
+- Keep methods focused on CRUD, mapping, and indexing operations.
+
+# Layer Boundaries
+
+- Do not implement business policy, workflow orchestration, or cross-domain decisions.
+- Do not import HTTP framework types or construct API response payloads.
+- Keep branching logic limited to persistence concerns (existence checks, mapping, indexing).
+
+# Error Handling
+
+- Normalize storage failures into consistent typed data-access errors.
+- Include operation context in errors (operation name, entity type, identifier when available).
+- Do not swallow I/O errors; throw or return explicit typed failures.
+
+# Storage Abstraction
+
+- Treat JSON/file storage as an implementation detail behind repository/store contracts.
+- Keep direct file-system access inside dedicated storage utilities in this layer only.
+- Keep service-facing method signatures storage-agnostic so backend storage can be replaced later.

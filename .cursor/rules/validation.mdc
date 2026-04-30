@@ -1,0 +1,17 @@
+---
+description: Request-validation rules for API route input boundaries
+globs: apps/api/**/*.ts
+alwaysApply: false
+---
+
+# Request Validation
+
+- Run request validation only in route middleware before handler logic.
+- Do not parse, validate, or coerce request input inside route handlers.
+- Validate `req.params`, `req.query`, and `req.body` as separate inputs.
+- Return HTTP 400 for invalid `req.params` before any service call.
+- Return HTTP 400 for invalid `req.query` before any service call.
+- Return HTTP 400 for invalid `req.body` before any service call.
+- Keep request schemas in centralized schema modules.
+- Reuse existing schemas; do not define inline schemas in route files.
+- Keep validation code scoped to request shape and constraint checks only.

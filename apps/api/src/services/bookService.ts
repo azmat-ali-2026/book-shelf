@@ -45,6 +45,14 @@ export const bookService = {
     return { book, reviews };
   },
 
+  getShelvesForBook(id: string) {
+    const book = getBookStore().getById(id);
+    if (!book) throw new NotFoundError(`Book '${id}' not found`);
+    return getShelfStore()
+      .getAll()
+      .filter((s) => s.bookIds.includes(id));
+  },
+
   createBook(dto: CreateBookDto): Book {
     const book: Book = {
       ...dto,

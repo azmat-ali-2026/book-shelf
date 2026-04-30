@@ -42,6 +42,14 @@ const getById: RequestHandler = (req, res, next) => {
   }
 };
 
+const getShelves: RequestHandler = (req, res, next) => {
+  try {
+    res.json({ data: bookService.getShelvesForBook(req.params['id'] ?? '') });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const create: RequestHandler = (req, res, next) => {
   try {
     const book = bookService.createBook(req.body as Parameters<typeof bookService.createBook>[0]);
@@ -90,6 +98,7 @@ const createReview: RequestHandler = (req, res, next) => {
 
 router.get('/search', search);
 router.get('/:id/reviews', getReviews);
+router.get('/:id/shelves', getShelves);
 router.post('/:id/reviews', validate(createReviewSchema), createReview);
 router.get('/:id', getById);
 router.put('/:id', validate(updateBookSchema), update);
