@@ -6,6 +6,7 @@ import {
   useUpdateBookMutation,
   useDeleteBookMutation,
   useCreateReviewMutation,
+  useUpdateProgressMutation,
 } from '../hooks/useBooks';
 import { useShelvesQuery, useAddBookToShelfMutation } from '../hooks/useShelves';
 import { Modal } from '../components/Modal';
@@ -19,12 +20,12 @@ import { FullPageSpinner, Spinner } from '../components/Spinner';
 import { DEMO_USER_ID } from '../constants';
 
 const genreColors: Record<string, string> = {
-  Technology: 'bg-blue-100 text-blue-700',
-  Fiction: 'bg-purple-100 text-purple-700',
-  Science: 'bg-green-100 text-green-700',
-  'Non-Fiction': 'bg-orange-100 text-orange-700',
-  Philosophy: 'bg-pink-100 text-pink-700',
-  History: 'bg-amber-100 text-amber-700',
+  Technology:    'bg-info/10 text-info border-info/30',
+  Fiction:       'bg-accent/10 text-accent border-accent/30',
+  Science:       'bg-success/10 text-success border-success/30',
+  'Non-Fiction': 'bg-bg-subtle text-text-secondary border-white/7',
+  Philosophy:    'bg-error/10 text-error border-error/30',
+  History:       'bg-accent/10 text-accent border-accent/30',
 };
 
 export const BookDetailPage = () => {
@@ -36,6 +37,9 @@ export const BookDetailPage = () => {
   const [showDelete, setShowDelete] = useState(false);
   const [showShelfPicker, setShowShelfPicker] = useState(false);
   const [shelfMsg, setShelfMsg] = useState('');
+  const [progressInput, setProgressInput] = useState('');
+  const [progressMsg, setProgressMsg] = useState('');
+  const progressMutation = useUpdateProgressMutation(id ?? '');
 
   const bookQuery = useBookDetailQuery(id ?? '');
   const shelvesQuery = useShelvesQuery(DEMO_USER_ID);
@@ -62,7 +66,7 @@ export const BookDetailPage = () => {
       ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
       : 0;
 
-  const genreClass = genreColors[book.genre] ?? 'bg-gray-100 text-gray-600';
+  const genreClass = genreColors[book.genre] ?? 'bg-bg-subtle text-text-secondary border-white/7';
 
   const handleEdit = async (data: Partial<Omit<Book, 'id' | 'addedAt'>>) => {
     await updateMutation.mutateAsync({ id: id!, data });
@@ -87,6 +91,19 @@ export const BookDetailPage = () => {
     }
   };
 
+  const handleProgress = async () => {
+    const page = parseInt(progressInput, 10);
+    if (isNaN(page) || page < 1) return;
+    setProgressMsg('');
+    try {
+      await progressMutation.mutateAsync(page);
+      setProgressInput('');
+      setProgressMsg('Progress saved!');
+    } catch (err) {
+      setProgressMsg(err instanceof Error ? err.message : 'Failed to save progress');
+    }
+  };
+
   const handleAddToShelf = async (shelfId: string) => {
     setShelfMsg('');
     try {
@@ -101,7 +118,7 @@ export const BookDetailPage = () => {
     <>
       <Link
         to="/"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-gray-900"
+        className="mb-6 inline-flex items-center gap-1.5 font-body text-sm text-text-muted transition-colors duration-150 hover:text-text-primary"
       >
         <svg
           className="h-4 w-4"
@@ -118,7 +135,7 @@ export const BookDetailPage = () => {
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Left: cover + actions */}
         <div className="lg:col-span-1">
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
+          <div className="overflow-hidden rounded-2xl border border-white/7 bg-bg-raised">
             <div className="aspect-[3/4] w-full">
               {book.coverUrl ? (
                 <img
@@ -127,8 +144,8 @@ export const BookDetailPage = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-50">
-                  <span className="text-6xl font-bold text-primary-200">
+                <div className="flex h-full w-full items-center justify-center bg-bg-overlay">
+                  <span className="font-display text-6xl font-bold text-text-muted">
                     {book.title.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -142,7 +159,7 @@ export const BookDetailPage = () => {
                 setShowShelfPicker(true);
                 setShelfMsg('');
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-accent/30"
             >
               <svg
                 className="h-4 w-4"
@@ -162,7 +179,7 @@ export const BookDetailPage = () => {
 
             <button
               onClick={() => setShowReview(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/7 bg-transparent px-4 py-3 font-body text-sm font-semibold text-text-secondary transition-all duration-150 hover:border-white/14 hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               <svg
                 className="h-4 w-4"
@@ -183,7 +200,7 @@ export const BookDetailPage = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowEdit(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/7 bg-transparent px-4 py-2.5 font-body text-sm font-medium text-text-muted transition-all duration-150 hover:border-white/14 hover:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent/20"
               >
                 <svg
                   className="h-3.5 w-3.5"
@@ -202,7 +219,7 @@ export const BookDetailPage = () => {
               </button>
               <button
                 onClick={() => setShowDelete(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-error/30 bg-error/10 px-4 py-2.5 font-body text-sm font-medium text-error transition-all duration-150 hover:bg-error/15 focus:outline-none focus:ring-2 focus:ring-error/30"
               >
                 <svg
                   className="h-3.5 w-3.5"
@@ -225,50 +242,110 @@ export const BookDetailPage = () => {
 
         {/* Right: details + reviews */}
         <div className="lg:col-span-2">
-          <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+          <div className="mb-6 rounded-2xl border border-white/7 bg-bg-raised p-6">
             <div className="mb-4 flex flex-wrap items-start gap-3">
               <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${genreClass}`}
+                className={`inline-flex items-center rounded border px-2 py-0.5 font-body text-xs font-semibold tracking-widest uppercase ${genreClass}`}
               >
                 {book.genre}
               </span>
-              <span className="text-sm text-gray-400">{book.year}</span>
+              <span className="font-mono text-sm text-text-muted">{book.year}</span>
               {book.isbn && (
-                <span className="text-xs text-gray-400">ISBN: {book.isbn}</span>
+                <span className="font-mono text-xs text-text-muted">ISBN: {book.isbn}</span>
               )}
             </div>
 
-            <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="mb-2 font-display text-display-md font-bold text-text-primary sm:text-display-lg">
               {book.title}
             </h1>
-            <p className="mb-4 text-base text-gray-600">{book.author}</p>
+            <p className="mb-4 font-body text-base text-text-secondary">{book.author}</p>
 
             {reviews.length > 0 && (
               <div className="mb-4 flex items-center gap-2">
                 <StarRating value={Math.round(avgRating)} readonly size="sm" />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="font-body text-sm font-medium text-text-primary">
                   {avgRating.toFixed(1)}
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="font-body text-sm text-text-muted">
                   ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
                 </span>
               </div>
             )}
 
             {book.description && (
-              <p className="leading-relaxed text-gray-600">{book.description}</p>
+              <p className="font-body leading-relaxed text-text-secondary">{book.description}</p>
             )}
           </div>
 
-          {/* Reviews */}
+          {/* Reading Progress */}
+          <div className="mb-6 rounded-2xl border border-white/7 bg-bg-raised p-6">
+            <h2 className="mb-4 font-display text-display-sm font-semibold text-text-primary">
+              Reading Progress
+            </h2>
+
+            {book.currentPage !== undefined && (
+              <div className="mb-4">
+                <div className="mb-1.5 flex justify-between font-body text-sm text-text-secondary">
+                  <span>Page {book.currentPage}{book.pages ? ` of ${book.pages}` : ''}</span>
+                  {book.pages && book.pages > 0 && (
+                    <span>{Math.round((book.currentPage / book.pages) * 100)}%</span>
+                  )}
+                </div>
+                {book.pages && book.pages > 0 && (
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-bg-overlay">
+                    <div
+                      className="h-full rounded-full bg-accent transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.round((book.currentPage / book.pages) * 100))}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {progressMsg && (
+              <p className={`mb-3 rounded-lg border px-3 py-2 font-body text-sm ${
+                progressMsg === 'Progress saved!'
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : 'border-error/30 bg-error/10 text-error'
+              }`}>
+                {progressMsg}
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={1}
+                max={book.pages ?? undefined}
+                value={progressInput}
+                onChange={(e) => setProgressInput(e.target.value)}
+                placeholder={book.currentPage !== undefined ? `Currently on page ${book.currentPage}` : 'Enter current page…'}
+                className="flex-1 rounded-xl border border-white/7 bg-bg-overlay px-3 py-2.5 font-body text-sm text-text-primary placeholder-text-muted focus:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
+              <button
+                onClick={() => void handleProgress()}
+                disabled={progressMutation.isPending || !progressInput}
+                className="flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent/30"
+              >
+                {progressMutation.isPending && (
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                )}
+                Update
+              </button>
+            </div>
+          </div>
+
           <div>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="font-display text-display-sm font-semibold text-text-primary">
                 Reviews{reviews.length > 0 && ` (${reviews.length})`}
               </h2>
               <button
                 onClick={() => setShowReview(true)}
-                className="text-sm font-medium text-primary-600 transition hover:text-primary-700"
+                className="font-body text-sm font-medium text-accent transition-colors duration-150 hover:text-accent-dim"
               >
                 + Write one
               </button>
@@ -282,7 +359,7 @@ export const BookDetailPage = () => {
                 action={
                   <button
                     onClick={() => setShowReview(true)}
-                    className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+                    className="rounded-lg bg-accent px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97]"
                   >
                     Write a Review
                   </button>
@@ -299,7 +376,6 @@ export const BookDetailPage = () => {
         </div>
       </div>
 
-      {/* Edit modal */}
       <Modal
         open={showEdit}
         title="Edit Book"
@@ -314,19 +390,18 @@ export const BookDetailPage = () => {
         />
       </Modal>
 
-      {/* Review modal */}
       <Modal open={showReview} title="Write a Review" onClose={() => setShowReview(false)}>
         <ReviewForm onSubmit={handleReview} onCancel={() => setShowReview(false)} />
       </Modal>
 
-      {/* Delete confirmation */}
       <Modal open={showDelete} title="Delete Book" onClose={() => setShowDelete(false)}>
-        <p className="mb-6 text-sm text-gray-600">
-          Are you sure you want to delete <strong>{book.title}</strong>? This will also remove
-          it from all shelves and delete all its reviews. This action cannot be undone.
+        <p className="mb-6 font-body text-sm text-text-secondary">
+          Are you sure you want to delete{' '}
+          <strong className="text-text-primary">{book.title}</strong>? This will also remove it
+          from all shelves and delete all its reviews. This action cannot be undone.
         </p>
         {deleteMutation.error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="mb-4 rounded-lg border border-error/30 bg-error/10 px-3 py-2 font-body text-sm text-error">
             {deleteMutation.error.message}
           </p>
         )}
@@ -334,14 +409,14 @@ export const BookDetailPage = () => {
           <button
             onClick={() => setShowDelete(false)}
             disabled={deleteMutation.isPending}
-            className="rounded-lg px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 disabled:opacity-50"
+            className="rounded-lg border border-white/7 bg-transparent px-4 py-2.5 font-body text-sm font-medium text-text-secondary transition-all duration-150 hover:border-white/14 hover:text-text-primary disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={() => void handleDelete()}
             disabled={deleteMutation.isPending}
-            className="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-lg bg-error px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:opacity-60"
           >
             {deleteMutation.isPending && <Spinner size="sm" />}
             {deleteMutation.isPending ? 'Deleting…' : 'Delete Book'}
@@ -349,7 +424,6 @@ export const BookDetailPage = () => {
         </div>
       </Modal>
 
-      {/* Shelf picker modal */}
       <Modal
         open={showShelfPicker}
         title="Add to Shelf"
@@ -366,10 +440,10 @@ export const BookDetailPage = () => {
 
         {shelfMsg && (
           <p
-            className={`mb-4 rounded-lg px-3 py-2 text-sm ${
+            className={`mb-4 rounded-lg border px-3 py-2 font-body text-sm ${
               shelfMsg === 'Added to shelf!'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-600'
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-error/30 bg-error/10 text-error'
             }`}
           >
             {shelfMsg}
@@ -394,10 +468,10 @@ export const BookDetailPage = () => {
                   key={shelf.id}
                   onClick={() => !onShelf && void handleAddToShelf(shelf.id)}
                   disabled={onShelf || isAdding}
-                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left font-body text-sm transition-all duration-150 ${
                     onShelf
-                      ? 'cursor-default border-green-200 bg-green-50 text-green-700'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-700'
+                      ? 'cursor-default border-success/30 bg-success/10 text-success'
+                      : 'border-white/7 bg-bg-overlay text-text-secondary hover:border-white/14 hover:text-text-primary'
                   }`}
                 >
                   <span className="font-medium">{shelf.name}</span>
@@ -406,17 +480,13 @@ export const BookDetailPage = () => {
                       <Spinner size="sm" />
                     ) : onShelf ? (
                       <svg
-                        className="h-4 w-4 text-green-600"
+                        className="h-4 w-4 text-success"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={2.5}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     ) : (
                       <svg
@@ -426,14 +496,10 @@ export const BookDetailPage = () => {
                         stroke="currentColor"
                         strokeWidth={2}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 4v16m8-8H4"
-                        />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                       </svg>
                     )}
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-text-muted">
                       {onShelf ? 'On shelf' : `${shelf.bookIds.length} books`}
                     </span>
                   </span>

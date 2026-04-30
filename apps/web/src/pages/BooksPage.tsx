@@ -15,6 +15,9 @@ const YEAR_OPTIONS = Array.from(
   (_, i) => new Date().getFullYear() - i,
 );
 
+const selectClass =
+  'rounded-xl border border-white/7 bg-bg-overlay px-3 py-2.5 font-body text-sm text-text-secondary transition-colors duration-150 hover:border-white/14 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15';
+
 export const BooksPage = () => {
   const [search, setSearch] = useState('');
   const [genre, setGenre] = useState('');
@@ -52,37 +55,41 @@ export const BooksPage = () => {
 
   return (
     <>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Browse Books</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {isLoading
-              ? 'Loading…'
-              : `${books.length} book${books.length !== 1 ? 's' : ''}${isFiltered ? ' matching filters' : ''}`}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
+      <div className="relative mb-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(232,164,74,0.07),transparent)]" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-display text-display-lg font-bold text-text-primary">
+              Browse Books
+            </h1>
+            <p className="mt-1 font-body text-sm text-text-muted">
+              {isLoading
+                ? 'Loading…'
+                : `${books.length} book${books.length !== 1 ? 's' : ''}${isFiltered ? ' matching filters' : ''}`}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-accent/30"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Add Book
-        </button>
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Book
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -99,12 +106,12 @@ export const BooksPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search title, author, or genre…"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition hover:border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-xl border border-white/7 bg-bg-overlay py-2.5 pl-9 pr-4 font-body text-sm text-text-primary placeholder:text-text-muted transition-colors duration-150 hover:border-white/14 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded text-text-muted transition-colors duration-150 hover:text-text-secondary"
               aria-label="Clear search"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -125,7 +132,7 @@ export const BooksPage = () => {
             setGenre(e.target.value);
             setSearch('');
           }}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm transition hover:border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className={selectClass}
           aria-label="Filter by genre"
         >
           <option value="">All genres</option>
@@ -142,7 +149,7 @@ export const BooksPage = () => {
             setYear(e.target.value);
             setSearch('');
           }}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm transition hover:border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className={selectClass}
           aria-label="Filter by year"
         >
           <option value="">All years</option>
@@ -156,7 +163,7 @@ export const BooksPage = () => {
         {isFiltered && (
           <button
             onClick={clearFilters}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-600 shadow-sm transition hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            className="rounded-xl border border-white/7 bg-transparent px-3 py-2.5 font-body text-sm text-text-muted transition-all duration-150 hover:border-white/14 hover:text-text-secondary"
           >
             Clear
           </button>
@@ -182,7 +189,7 @@ export const BooksPage = () => {
             !isFiltered ? (
               <button
                 onClick={() => setShowAdd(true)}
-                className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+                className="rounded-lg bg-accent px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97]"
               >
                 Add a Book
               </button>
@@ -193,8 +200,14 @@ export const BooksPage = () => {
 
       {!isLoading && !queryError && books.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {books.map((book) => (
-            <BookCard key={book.id} book={book} />
+          {books.map((book, index) => (
+            <div
+              key={book.id}
+              className="animate-fade-up"
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              <BookCard book={book} />
+            </div>
           ))}
         </div>
       )}

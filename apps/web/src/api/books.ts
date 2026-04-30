@@ -61,4 +61,15 @@ export const booksApi = {
     );
     return data.data;
   },
+
+  updateProgress: async (
+    id: string,
+    currentPage: number,
+  ): Promise<{ bookId: string; currentPage: number; pages: number | undefined; percentComplete: number | null }> => {
+    const { data } = await apiClient.patch<ApiResponse<{ bookId: string; currentPage: number; pages: number | undefined; percentComplete: number | null }>>(
+      `/api/books/${id}/progress`,
+      { currentPage },
+    );
+    return data.data;
+  },
 };

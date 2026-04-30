@@ -18,8 +18,8 @@ const queryClient = new QueryClient({
 const NotFound = () => (
   <div className="flex min-h-64 flex-col items-center justify-center text-center">
     <p className="mb-2 text-5xl">🔭</p>
-    <h2 className="mb-1 text-xl font-bold text-gray-900">Page not found</h2>
-    <p className="text-sm text-gray-500">The page you're looking for doesn't exist.</p>
+    <h2 className="mb-1 font-display text-display-sm font-bold text-text-primary">Page not found</h2>
+    <p className="font-body text-sm text-text-muted">The page you're looking for doesn't exist.</p>
   </div>
 );
 
