@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": "01KQD3HPDBXDWW20CFETY3E4JW",
+    "bookId": "bk_001",
+    "userId": "demo-user",
+    "rating": 4,
+    "createdAt": "2026-04-29T17:10:52.076Z"
+  }
+]

@@ -2,77 +2,103 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+BookShelf is a Goodreads-like monorepo REST API + web frontend for browsing, searching, shelving, and reviewing books.
+
+## What NOT to Do
+
+- Don't add a real database — the JSON file store is intentional.
+- Don't add npm dependencies without discussion.
+- Don't use `console.log` — the API has a `requestLogger` middleware for HTTP logging.
+- Don't modify `packages/shared` types without updating both `apps/api` and `apps/web` usages.
+- Don't use `function` declarations — use arrow functions consistently.
+- Don't skip `resetStores()` in new test files.
+- Don't register new Express routes without checking order sensitivity in `books.ts`.
+
+## TypeScript Constraints
+
+- `noUncheckedIndexedAccess: true` — all array/Map accesses return `T | undefined`; guard before use.
+- No `any` — use `unknown` and narrow (e.g. `axios.isAxiosError`, `instanceof`).
+- All API modules are CommonJS (`"module": "CommonJS"`).
+- `apps/api/tsconfig.json` covers `src/` only. Tests use `tsconfig.test.json` (configured in `jest.config.js` and used by the IDE for type checking inside `tests/`).
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Runtime | Node.js 20 |
+| API framework | Express 4 + TypeScript (CommonJS) |
+| Validation | Zod (API schemas) |
+| Data | JSON files via in-memory FileStore |
+| Tests | Jest + Supertest (`--runInBand` — mandatory) |
+| Frontend | React 18 + Vite + Tailwind CSS |
+| Frontend data | TanStack Query + Axios |
+| Frontend forms | Formik + Zod |
+
 ## Commands
 
 ```bash
-# Development
-npm run dev              # Start API with hot reload (tsx watch)
-npm run build            # Build shared package then API
+# API (terminal 1)
+npm run dev              # tsx watch on apps/api/src/index.ts → http://localhost:3000
+npm run dev:web          # Vite dev server → http://localhost:3001 (proxies /api → :3000)
 
-# Testing
-npm run test             # Run all tests (jest --runInBand, must be sequential)
-npm run test --workspace=apps/api -- --testPathPattern=books  # Single test file
+# Build
+npm run build            # shared then API
+npm run build:web        # Vite production build
 
-# Per-workspace
-npm run build --workspace=packages/shared
-npm run build --workspace=apps/api
+# Tests — always sequential (concurrent writes corrupt JSON files)
+npm run test                                                             # all tests
+npm run test --workspace=apps/api -- --testPathPattern=books            # single file
 ```
-
-Tests run with `--runInBand` because all tests write to the filesystem and concurrent access causes corruption.
 
 ## Architecture
 
-**Monorepo** with npm workspaces:
-- `packages/shared` — `@bookshelf/shared`: shared TypeScript types (`Book`, `Shelf`, `Review`, `ApiResponse`, `ApiError`) and the `nowIso()` utility
-- `apps/api` — Express REST API that imports from `@bookshelf/shared`
-- `data/` — JSON seed files (books.json, shelves.json, reviews.json)
+**Monorepo** — npm workspaces: `packages/shared`, `apps/api`, `apps/web`.
 
-The API imports `@bookshelf/shared` via a TypeScript path alias (`../../packages/shared/src`) so the shared package doesn't need to be built first during development. Jest uses `moduleNameMapper` for the same reason.
+`packages/shared` exports TypeScript types (`Book`, `Shelf`, `Review`, `ApiResponse`, `ApiError`) and `nowIso()`. The API imports it via a path alias (`../../packages/shared/src`) so the package never needs to be built first; Jest uses `moduleNameMapper` for the same reason.
 
-### Data Layer (`apps/api/src/data/`)
+### API layers (`apps/api/src/`)
 
-- **FileStore\<T\>** — Generic JSON-file-backed store. Loads into `Map<string, T>` on construction; all reads hit memory; writes flush synchronously via `fs.writeFileSync`. `DATA_DIR` env var controls the directory (default: `<project>/data`).
-- **GenreIndex** — Inverted Map index for O(g) genre queries instead of O(n). Supports exact, prefix, and partial case-insensitive matches. Marks itself stale after writes and rebuilds lazily.
-- **data/index.ts** — Lazy singletons for `bookStore`, `shelfStore`, `reviewStore`, and `genreIndex`. `resetStores()` recreates all singletons — called by tests before each suite for isolation.
+**Data** → **Services** → **Routes** → Express
 
-### Service Layer (`apps/api/src/services/`)
+- `data/FileStore<T>` — loads JSON into `Map<string, T>` on construction; reads from memory; writes via `fs.writeFileSync`. Controlled by `DATA_DIR` env var.
+- `data/GenreIndex` — inverted index for O(1) genre lookups; marks stale after writes and rebuilds lazily.
+- `data/index.ts` — exports lazy singletons `bookStore`, `shelfStore`, `reviewStore`, `genreIndex`. **`resetStores()`** re-creates all of them — required in tests before each suite.
+- `services/bookService` — `deleteBook` cascades: removes book from all shelves, deletes all its reviews. Genre mutations must call `genreIndex.invalidate()`.
+- `services/shelfService` — `addBookToShelf` throws `ConflictError` (409) on duplicate.
+- `routes/books.ts` — route order is load-bearing: `/search` and `/:id/reviews` must be registered **before** `/:id`.
 
-- **bookService**: `deleteBook` cascades — removes the book from all shelves and deletes all its reviews.
-- **shelfService**: `addBookToShelf` throws `ConflictError` (409) for duplicate adds.
-- **reviewService**: Validates the book exists before creating a review.
+**Error hierarchy:** `AppError` → `NotFoundError` (404) | `ValidationError` (400) | `ConflictError` (409). `errorHandler.ts` must remain the **last** middleware in `app.ts` (four-parameter signature).
 
-### Routes (`apps/api/src/routes/`)
+### Frontend layers (`apps/web/src/`)
 
-Route order in `books.ts` is intentional: `/search` and `/:id/reviews` must be registered **before** `/:id` to avoid Express matching them as IDs.
+**API** → **Hooks** → **Pages / Components**
 
-```
-GET  /api/books/search        — title/author/genre substring match
-GET  /api/books/:id/reviews
-POST /api/books/:id/reviews
-GET  /api/books/:id           — returns book + reviews
-PUT  /api/books/:id
-DELETE /api/books/:id         — cascades to shelves and reviews
-GET  /api/books               — filter by genre, year
-POST /api/books
+- `api/client.ts` — Axios instance; response interceptor converts HTTP errors into typed `ApiRequestError`.
+- `api/books.ts` / `api/shelves.ts` — typed async functions; unwrap `{ data: T }` wrapper from every response.
+- `hooks/queryKeys.ts` — single source of truth for all TanStack Query cache keys.
+- `hooks/useBooks.ts` / `hooks/useShelves.ts` — all `useQuery` / `useMutation` definitions; mutations invalidate the relevant `queryKeys.*` on success.
+- `lib/zodFormik.ts` — `toFormikValidate(schema)` bridges a Zod schema to Formik's `validate` prop.
+- `schemas/` — one Zod schema per form (`bookFormSchema`, `shelfFormSchema`, `reviewFormSchema`).
 
-GET  /api/shelves             — optional ?userId filter
-POST /api/shelves
-POST /api/shelves/:id/books
-DELETE /api/shelves/:id/books/:bookId
-```
+## Conventions
 
-### Validation & Errors
+- Arrow functions for all function declarations and component definitions — no `function` keyword.
+- Early returns over nested if/else.
+- API response shape: `{ data: T }` on success; `{ error: { code, message, details? } }` on failure.
+- Formik forms: bind inputs with `formik.getFieldProps(name)`; show errors only when `formik.touched[field]` is true; surface server errors via `formik.setStatus`.
 
-- Zod schemas live in `apps/api/src/routes/schemas.ts`. The `validate(schema)` middleware parses `req.body` and attaches the coerced value; on failure it throws `ValidationError`.
-- Error hierarchy: `AppError` (base) → `NotFoundError` (404), `ValidationError` (400, includes flattened Zod details), `ConflictError` (409).
-- `errorHandler.ts` is a four-parameter Express middleware — it must remain last in `app.ts`.
+## Data Layer
 
-### Test Isolation (`apps/api/tests/testDataDir.ts`)
+- All persistent data lives in `/data/*.json` (books, shelves, reviews).
+- Access data **only** through `apps/api/src/data/` — never read/write JSON files directly from routes or services.
+- IDs use `ulid()` — not `nanoid` (v5+ is ESM-only, incompatible with CommonJS Jest).
 
-Each test suite's `beforeAll` creates a temp directory, copies the seed JSON files there, sets `DATA_DIR`, and calls `resetStores()`. `afterAll` deletes the temp dir and resets again. This pattern must be used in any new test file.
+## Test Isolation
 
-## Key Constraints
+Every new test file must follow the pattern in `apps/api/tests/helpers/testDataDir.ts`:
+1. `beforeAll` — copy seed JSON to a temp dir, set `DATA_DIR`, call `resetStores()`.
+2. `afterAll` — delete temp dir, call `resetStores()`.
 
-- IDs are generated with `ulid()` (not `nanoid` — v5+ is ESM-only and incompatible with CommonJS).
-- `noUncheckedIndexedAccess: true` is enabled — array/map accesses return `T | undefined` and must be guarded.
-- All modules are CommonJS (`"module": "CommonJS"` in tsconfig).
+Skipping this causes tests to corrupt the real seed data and bleed state between suites.
