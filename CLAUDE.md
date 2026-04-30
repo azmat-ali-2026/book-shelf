@@ -6,6 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 BookShelf is a Goodreads-like monorepo REST API + web frontend for browsing, searching, shelving, and reviewing books.
 
+## What NOT to Do
+
+- Don't add a real database — the JSON file store is intentional.
+- Don't add npm dependencies without discussion.
+- Don't use `console.log` — the API has a `requestLogger` middleware for HTTP logging.
+- Don't modify `packages/shared` types without updating both `apps/api` and `apps/web` usages.
+- Don't use `function` declarations — use arrow functions consistently.
+- Don't skip `resetStores()` in new test files.
+- Don't register new Express routes without checking order sensitivity in `books.ts`.
+
+## TypeScript Constraints
+
+- `noUncheckedIndexedAccess: true` — all array/Map accesses return `T | undefined`; guard before use.
+- No `any` — use `unknown` and narrow (e.g. `axios.isAxiosError`, `instanceof`).
+- All API modules are CommonJS (`"module": "CommonJS"`).
+- `apps/api/tsconfig.json` covers `src/` only. Tests use `tsconfig.test.json` (configured in `jest.config.js` and used by the IDE for type checking inside `tests/`).
+
 ## Tech Stack
 
 | Layer | Choice |
@@ -70,7 +87,6 @@ npm run test --workspace=apps/api -- --testPathPattern=books            # single
 - Arrow functions for all function declarations and component definitions — no `function` keyword.
 - Early returns over nested if/else.
 - API response shape: `{ data: T }` on success; `{ error: { code, message, details? } }` on failure.
-- No `any` — use `unknown` and narrow (e.g. `axios.isAxiosError`, `instanceof`).
 - Formik forms: bind inputs with `formik.getFieldProps(name)`; show errors only when `formik.touched[field]` is true; surface server errors via `formik.setStatus`.
 
 ## Data Layer
@@ -86,19 +102,3 @@ Every new test file must follow the pattern in `apps/api/tests/helpers/testDataD
 2. `afterAll` — delete temp dir, call `resetStores()`.
 
 Skipping this causes tests to corrupt the real seed data and bleed state between suites.
-
-## TypeScript Constraints
-
-- `noUncheckedIndexedAccess: true` — all array/Map accesses return `T | undefined`; guard before use.
-- All API modules are CommonJS (`"module": "CommonJS"`).
-- `apps/api/tsconfig.json` covers `src/` only. Tests use `tsconfig.test.json` (configured in `jest.config.js` and used by the IDE for type checking inside `tests/`).
-
-## What NOT to Do
-
-- Don't add a real database — the JSON file store is intentional.
-- Don't add npm dependencies without discussion.
-- Don't use `console.log` — the API has a `requestLogger` middleware for HTTP logging.
-- Don't modify `packages/shared` types without updating both `apps/api` and `apps/web` usages.
-- Don't use `function` declarations — use arrow functions consistently.
-- Don't skip `resetStores()` in new test files.
-- Don't register new Express routes without checking order sensitivity in `books.ts`.
