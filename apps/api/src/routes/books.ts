@@ -7,6 +7,7 @@ import {
   updateBookSchema,
   createReviewSchema,
   listBooksQuerySchema,
+  updateProgressSchema,
 } from './schemas';
 
 const router = Router();
@@ -88,9 +89,22 @@ const createReview: RequestHandler = (req, res, next) => {
   }
 };
 
+const updateProgress: RequestHandler = (req, res, next) => {
+  try {
+    const result = bookService.updateProgress(
+      req.params['id'] ?? '',
+      (req.body as { currentPage: number }).currentPage,
+    );
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 router.get('/search', search);
 router.get('/:id/reviews', getReviews);
 router.post('/:id/reviews', validate(createReviewSchema), createReview);
+router.patch('/:id/progress', validate(updateProgressSchema), updateProgress);
 router.get('/:id', getById);
 router.put('/:id', validate(updateBookSchema), update);
 router.delete('/:id', remove);
