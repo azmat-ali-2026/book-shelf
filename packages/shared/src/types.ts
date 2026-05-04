@@ -7,6 +7,8 @@ export interface Book {
   isbn?: string;
   description?: string;
   coverUrl?: string | null;
+  pages?: number;
+  currentPage?: number;
   addedAt: string;
 }
 

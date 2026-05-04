@@ -43,17 +43,17 @@ export const Modal = ({
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-bg-base/70 backdrop-blur-sm" />
       <div
-        className={`relative w-full ${maxWidth} animate-in fade-in zoom-in-95 rounded-2xl bg-white shadow-2xl`}
+        className={`relative w-full ${maxWidth} animate-fade-up rounded-2xl border border-white/7 bg-bg-overlay shadow-[0_24px_64px_rgba(0,0,0,0.6)]`}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-b border-white/7 px-6 py-4">
+          <h2 id="modal-title" className="font-display text-display-sm font-semibold text-text-primary">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            className="rounded-lg p-1.5 text-text-muted transition-colors duration-150 hover:bg-bg-subtle hover:text-text-secondary focus:outline-none focus:ring-2 focus:ring-accent/30"
             aria-label="Close modal"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -10,7 +10,8 @@
     "dev:web": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/api",
     "build:web": "npm run build --workspace=apps/web",
-    "test": "npm run test --workspace=apps/api"
+    "test": "npm run test --workspace=apps/api",
+    "mcp": "npx tsx apps/mcp/src/index.ts"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

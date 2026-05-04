@@ -35,3 +35,7 @@ export const listBooksQuerySchema = z.object({
     .transform(Number)
     .optional(),
 });
+
+export const updateProgressSchema = z.object({
+  currentPage: z.number().int().positive(),
+});

@@ -1,7 +1,7 @@
 import { ulid } from 'ulid';
 import { Book, nowIso } from '@bookshelf/shared';
 import { getBookStore, getShelfStore, getReviewStore, genreIndex } from '../data';
-import { NotFoundError } from '../errors/HttpErrors';
+import { NotFoundError, ValidationError } from '../errors/HttpErrors';
 
 export type CreateBookDto = Omit<Book, 'id' | 'addedAt'>;
 export type UpdateBookDto = Partial<Omit<Book, 'id' | 'addedAt'>>;
@@ -100,5 +100,27 @@ export const bookService = {
           b.genre.toLowerCase().includes(term),
       )
       .sort((a, b) => a.title.localeCompare(b.title));
+  },
+
+  updateProgress(id: string, currentPage: number): { bookId: string; currentPage: number; pages: number | undefined; percentComplete: number | null } {
+    const book = getBookStore().getById(id);
+    if (!book) throw new NotFoundError(`Book '${id}' not found`);
+
+    if (book.pages !== undefined && currentPage > book.pages) {
+      throw new ValidationError(
+        { currentPage, pages: book.pages },
+        `currentPage (${currentPage}) exceeds total pages (${book.pages})`,
+      );
+    }
+
+    const updated: Book = { ...book, currentPage };
+    getBookStore().save(updated);
+
+    const percentComplete =
+      book.pages !== undefined && book.pages > 0
+        ? Math.round((currentPage / book.pages) * 1000) / 10
+        : null;
+
+    return { bookId: id, currentPage, pages: book.pages, percentComplete };
   },
 };

@@ -20,15 +20,15 @@ export const StarRating = ({
         type="button"
         disabled={readonly}
         onClick={() => onChange?.(star)}
-        className={`transition-transform ${
+        className={`transition-transform duration-100 ${
           readonly
             ? 'cursor-default'
-            : 'cursor-pointer hover:scale-110 focus:outline-none focus:ring-1 focus:ring-yellow-400 focus:ring-offset-1'
+            : 'cursor-pointer hover:scale-110 focus:outline-none focus:ring-1 focus:ring-accent/40 focus:ring-offset-1 focus:ring-offset-bg-overlay'
         }`}
         aria-label={readonly ? undefined : `Rate ${star} star${star > 1 ? 's' : ''}`}
       >
         <svg
-          className={`${sizes[size]} ${star <= value ? 'text-yellow-400' : 'text-gray-200'} transition-colors`}
+          className={`${sizes[size]} ${star <= value ? 'text-accent' : 'text-text-muted'} transition-colors duration-100`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >

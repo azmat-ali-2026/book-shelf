@@ -8,6 +8,8 @@ export interface Book {
   description?: string;
   coverUrl?: string | null;
   addedAt: string;
+  pages?: number;
+  currentPage?: number;
 }
 
 export interface Shelf {

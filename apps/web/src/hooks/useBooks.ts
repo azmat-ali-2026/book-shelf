@@ -68,3 +68,13 @@ export const useCreateReviewMutation = (bookId: string) => {
     },
   });
 };
+
+export const useUpdateProgressMutation = (bookId: string) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (currentPage: number) => booksApi.updateProgress(bookId, currentPage),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.books.detail(bookId) });
+    },
+  });
+};

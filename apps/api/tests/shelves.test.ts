@@ -67,6 +67,36 @@ describe('POST /api/shelves/:id/books', () => {
   });
 });
 
+describe('GET /api/shelves/:id', () => {
+  it('returns shelf with hydrated books', async () => {
+    const res = await request(app)
+      .get(`/api/shelves/${createdShelfId}`)
+      .expect(200);
+    expect(res.body.data.shelf.id).toBe(createdShelfId);
+    expect(res.body.data.books).toBeInstanceOf(Array);
+  });
+
+  it('returns 404 for unknown shelf', async () => {
+    await request(app).get('/api/shelves/unknown-shelf').expect(404);
+  });
+});
+
+describe('DELETE /api/shelves/:id', () => {
+  it('deletes a shelf and returns 204', async () => {
+    const createRes = await request(app)
+      .post('/api/shelves')
+      .send({ userId: 'user_del', name: 'To Delete' })
+      .expect(201);
+    const id = createRes.body.data.id as string;
+    await request(app).delete(`/api/shelves/${id}`).expect(204);
+    await request(app).get(`/api/shelves/${id}`).expect(404);
+  });
+
+  it('returns 404 when deleting a non-existent shelf', async () => {
+    await request(app).delete('/api/shelves/unknown-shelf').expect(404);
+  });
+});
+
 describe('DELETE /api/shelves/:id/books/:bookId', () => {
   it('removes a book from a shelf', async () => {
     const res = await request(app)

@@ -1,7 +1,12 @@
 import { ulid } from 'ulid';
-import { Shelf, nowIso } from '@bookshelf/shared';
+import { Book, Shelf, nowIso } from '@bookshelf/shared';
 import { getShelfStore, getBookStore } from '../data';
 import { NotFoundError, ConflictError } from '../errors/HttpErrors';
+
+export interface ShelfWithBooks {
+  shelf: Shelf;
+  books: Book[];
+}
 
 export interface CreateShelfDto {
   userId: string;
@@ -40,6 +45,23 @@ export const shelfService = {
     }
 
     return getShelfStore().save({ ...shelf, bookIds: [...shelf.bookIds, bookId] });
+  },
+
+  getShelfWithBooks(id: string): ShelfWithBooks {
+    const shelf = getShelfStore().getById(id);
+    if (!shelf) throw new NotFoundError(`Shelf '${id}' not found`);
+    const bookStore = getBookStore();
+    const books = shelf.bookIds.flatMap((bid) => {
+      const book = bookStore.getById(bid);
+      return book !== undefined ? [book] : [];
+    });
+    return { shelf, books };
+  },
+
+  deleteShelf(id: string): void {
+    const shelf = getShelfStore().getById(id);
+    if (!shelf) throw new NotFoundError(`Shelf '${id}' not found`);
+    getShelfStore().delete(id);
   },
 
   removeBookFromShelf(shelfId: string, bookId: string): Shelf {

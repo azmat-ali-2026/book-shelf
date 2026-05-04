@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useShelvesQuery, useShelfBooksQuery, useRemoveBookFromShelfMutation, useAddBookToShelfMutation } from '../hooks/useShelves';
+import {
+  useShelvesQuery,
+  useShelfBooksQuery,
+  useRemoveBookFromShelfMutation,
+  useAddBookToShelfMutation,
+} from '../hooks/useShelves';
 import { useBookSearchQuery } from '../hooks/useBooks';
 import { useDebounce } from '../hooks/useDebounce';
 import { BookCard } from '../components/BookCard';
@@ -67,7 +72,7 @@ export const ShelfDetailPage = () => {
     <>
       <Link
         to="/shelves"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-500 transition hover:text-gray-900"
+        className="mb-6 inline-flex items-center gap-1.5 font-body text-sm text-text-muted transition-colors duration-150 hover:text-text-primary"
       >
         <svg
           className="h-4 w-4"
@@ -81,36 +86,41 @@ export const ShelfDetailPage = () => {
         Back to shelves
       </Link>
 
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{shelf.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            {booksQuery.isLoading
-              ? 'Loading…'
-              : books.length === 0
-                ? 'No books yet'
-                : `${books.length} book${books.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setShowAddBook(true);
-            setAddMsg('');
-            setSearchQuery('');
-          }}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
+      <div className="relative mb-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(232,164,74,0.07),transparent)]" />
+        <div className="relative flex items-end justify-between">
+          <div>
+            <h1 className="font-display text-display-lg font-bold text-text-primary">
+              {shelf.name}
+            </h1>
+            <p className="mt-1 font-body text-sm text-text-muted">
+              {booksQuery.isLoading
+                ? 'Loading…'
+                : books.length === 0
+                  ? 'No books yet'
+                  : `${books.length} book${books.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowAddBook(true);
+              setAddMsg('');
+              setSearchQuery('');
+            }}
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-accent/30"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Add Book
-        </button>
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Book
+          </button>
+        </div>
       </div>
 
       {booksQuery.isLoading && <FullPageSpinner />}
@@ -123,7 +133,7 @@ export const ShelfDetailPage = () => {
           action={
             <button
               onClick={() => setShowAddBook(true)}
-              className="rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
+              className="rounded-lg bg-accent px-5 py-2.5 font-body text-sm font-semibold text-text-inverse transition-all duration-150 hover:bg-accent-dim active:scale-[0.97]"
             >
               Add a Book
             </button>
@@ -141,7 +151,7 @@ export const ShelfDetailPage = () => {
                 <button
                   onClick={() => handleRemove(book.id)}
                   disabled={removeMutation.isPending}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 focus:outline-none focus:ring-1 focus:ring-red-400 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-error/30 bg-error/10 px-3 py-1.5 font-body text-xs font-medium text-error transition-all duration-150 hover:bg-error/15 focus:outline-none focus:ring-1 focus:ring-error/30 disabled:opacity-50"
                 >
                   {removeMutation.isPending && <Spinner size="sm" />}
                   {removeMutation.isPending ? 'Removing…' : 'Remove'}
@@ -152,7 +162,6 @@ export const ShelfDetailPage = () => {
         </div>
       )}
 
-      {/* Add book modal */}
       <Modal
         open={showAddBook}
         title="Add Book to Shelf"
@@ -161,7 +170,7 @@ export const ShelfDetailPage = () => {
       >
         <div className="relative mb-4">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -178,17 +187,17 @@ export const ShelfDetailPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search books by title, author, or genre…"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm text-gray-900 placeholder-gray-400 transition hover:border-gray-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-xl border border-white/7 bg-bg-overlay py-2.5 pl-9 pr-4 font-body text-sm text-text-primary placeholder:text-text-muted transition-colors duration-150 hover:border-white/14 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
             autoFocus
           />
         </div>
 
         {addMsg && (
           <p
-            className={`mb-3 rounded-lg px-3 py-2 text-sm ${
+            className={`mb-3 rounded-lg border px-3 py-2 font-body text-sm ${
               addMsg.endsWith('added!') || addMsg === 'Added!'
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-600'
+                ? 'border-success/30 bg-success/10 text-success'
+                : 'border-error/30 bg-error/10 text-error'
             }`}
           >
             {addMsg}
@@ -202,7 +211,9 @@ export const ShelfDetailPage = () => {
         )}
 
         {!searchQuery_.isLoading && debouncedSearch && searchResults.length === 0 && (
-          <p className="py-4 text-center text-sm text-gray-400">No matching books found</p>
+          <p className="py-4 text-center font-body text-sm text-text-muted">
+            No matching books found
+          </p>
         )}
 
         {!searchQuery_.isLoading && searchResults.length > 0 && (
@@ -212,11 +223,11 @@ export const ShelfDetailPage = () => {
                 key={book.id}
                 onClick={() => void handleAdd(book.id)}
                 disabled={addMutation.isPending}
-                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-left transition hover:border-primary-200 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60"
+                className="flex w-full items-center justify-between rounded-xl border border-white/7 bg-bg-overlay px-4 py-3 text-left font-body transition-all duration-150 hover:border-white/14 focus:outline-none focus:ring-2 focus:ring-accent/15 disabled:opacity-60"
               >
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{book.title}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-sm font-medium text-text-primary">{book.title}</p>
+                  <p className="text-xs text-text-muted">
                     {book.author} · {book.year}
                   </p>
                 </div>
@@ -224,7 +235,7 @@ export const ShelfDetailPage = () => {
                   <Spinner size="sm" />
                 ) : (
                   <svg
-                    className="h-4 w-4 text-primary-500"
+                    className="h-4 w-4 text-accent"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -239,7 +250,7 @@ export const ShelfDetailPage = () => {
         )}
 
         {!debouncedSearch && (
-          <p className="py-4 text-center text-sm text-gray-400">
+          <p className="py-4 text-center font-body text-sm text-text-muted">
             Type to search for a book to add
           </p>
         )}
