@@ -45,10 +45,34 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-server.tool(
+server.registerTool(
+  "list_books",
+  { description: "List all books in the BookShelf library" },
+  () => {
+    const books = loadJson<Book>("books.json");
+    if (books.length === 0) {
+      return { content: [{ type: "text", text: "No books found." }] };
+    }
+    const lines = books.map(
+      (b) => `[${b.id}] "${b.title}" by ${b.author} (${b.year}) — ${b.genre}`
+    );
+    return {
+      content: [
+        {
+          type: "text",
+          text: `${books.length} book(s) in the library:\n\n${lines.join("\n")}`,
+        },
+      ],
+    };
+  }
+);
+
+server.registerTool(
   "query_books",
-  "Search books by title, author, genre, or description",
-  { term: z.string().describe("Search term to match against title, author, genre, or description") },
+  {
+    description: "Search books by title, author, genre, or description",
+    inputSchema: { term: z.string().describe("Search term to match against title, author, genre, or description") },
+  },
   ({ term }) => {
     const books = loadJson<Book>("books.json");
     const lower = term.toLowerCase();
@@ -78,10 +102,9 @@ server.tool(
   }
 );
 
-server.tool(
+server.registerTool(
   "get_book_stats",
-  "Get aggregate statistics about the BookShelf library",
-  {},
+  { description: "Get aggregate statistics about the BookShelf library" },
   () => {
     const books = loadJson<Book>("books.json");
     const reviews = loadJson<Review>("reviews.json");

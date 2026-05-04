@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "bookshelf": {
+      "command": "npx",
+      "args": ["tsx", "apps/mcp/src/index.ts"],
+      "cwd": "/Users/azmat/Work/ai-training/book-shelf"
+    }
+  }
+}
